@@ -1,46 +1,39 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
 
 import { story, asset } from "../data";
-import { Section, SectionHeader, fadeIn } from "./ui";
+import Window from "../desktop/Window";
 
+// TextEdit-style document.
 const Story = () => {
   const [open, setOpen] = useState(false);
   const shown = open ? story : story.slice(0, 2);
 
   return (
-    <Section id="story">
-      <div className="grid gap-10 lg:grid-cols-[1fr_2fr]">
-        <div>
-          <SectionHeader eyebrow="Who am I? ⚡" title="My story" />
-          <motion.img
-            variants={fadeIn("up", 0.2)}
-            src={asset("avatar-fist.png")}
-            alt=""
-            className="mt-8 hidden w-56 lg:block"
-          />
-        </div>
-
-        <motion.div variants={fadeIn("left", 0.1)} className="glass relative rounded-3xl p-7 sm:p-10">
-          <span className="absolute -top-6 left-8 font-serif text-7xl text-accent/70" aria-hidden>
-            “
-          </span>
-          <div className="space-y-5">
-            {shown.map((para) => (
-              <p key={para.slice(0, 24)} className="text-[16px] leading-[29px] text-white/85">
+    <Window id="story" title="my-story.txt — Edited" bodyClassName="">
+      <div className="grid lg:grid-cols-[240px_1fr]">
+        <aside className="hidden flex-col items-center justify-start gap-4 border-r border-white/[0.06] bg-black/20 p-8 lg:flex">
+          <img src={asset("avatar-fist.png")} alt="" className="w-44" />
+          <p className="text-center text-[13px] text-muted">Who am I? ⚡</p>
+        </aside>
+        <div className="mx-auto max-w-[68ch] px-6 py-10 sm:px-12 sm:py-14">
+          <h3 className="font-serif text-[34px] font-semibold leading-tight tracking-tight sm:text-[42px]">My story</h3>
+          <p className="mt-2 text-[13px] text-muted">From Egypt to Seattle, and into computer science.</p>
+          <div className="mt-8 space-y-6">
+            {shown.map((para, i) => (
+              <p
+                key={para.slice(0, 24)}
+                className={`font-serif text-[18px] leading-[1.8] text-white/85 ${i === 0 ? "first-letter:float-left first-letter:mr-2 first-letter:text-[56px] first-letter:leading-[0.9] first-letter:text-sys-blue" : ""}`}
+              >
                 {para}
               </p>
             ))}
           </div>
-          <button
-            onClick={() => setOpen(!open)}
-            className="mt-6 rounded-lg border border-accent/50 px-4 py-2 text-sm font-semibold text-white transition hover:bg-accent"
-          >
-            {open ? "Show less" : "Read the full story"}
+          <button onClick={() => setOpen(!open)} className="btn-ghost mt-8">
+            {open ? "Show less" : `Keep reading (${story.length - 2} more paragraphs)`}
           </button>
-        </motion.div>
+        </div>
       </div>
-    </Section>
+    </Window>
   );
 };
 

@@ -1,75 +1,86 @@
 import { motion } from "framer-motion";
-import Tilt from "react-parallax-tilt";
 
-import { profile, services, stats, asset, splineScenes } from "../data";
-import SplineScene from "./canvas/SplineScene";
-import { Chip, Section, SectionHeader, fadeIn } from "./ui";
+import { profile, services, stats, education, asset } from "../data";
+import Window, { Eyebrow, H, Tag } from "../desktop/Window";
 
+const specs = [
+  { k: "Role", v: "Full-stack Software Engineer" },
+  { k: "Location", v: profile.location },
+  { k: "Education", v: `B.S. Computer Science · ${education[0].school}` },
+  { k: "Stack", v: "React · Node.js · .NET · C# · AWS · Unity" },
+  { k: "Status", v: "Open to software engineering roles", live: true },
+];
+
+// "About This Mac", but about me.
 const About = () => (
-  <Section id="about">
-    <div className="grid gap-12 lg:grid-cols-[1.4fr_1fr] lg:items-center">
-      <div>
-        <SectionHeader eyebrow="Introduction" title="About me" />
-        <motion.p variants={fadeIn("", 0.1, 1)} className="mt-6 text-[17px] leading-[30px] text-white/85">
-          {profile.summary}
-        </motion.p>
-        <motion.p variants={fadeIn("", 0.2, 1)} className="mt-4 text-[16px] leading-[28px] text-secondary">
-          {profile.intro} {profile.profileText}
-        </motion.p>
-
-        <motion.div variants={fadeIn("up", 0.3)} className="mt-6 flex flex-wrap gap-2">
-          <Chip>🎓 B.S. Computer Science · UW</Chip>
-          <Chip>📍 {profile.location}</Chip>
-          {profile.hobbies.map((h) => (
-            <Chip key={h}>
-              {{ Movies: "🎬", "Building Unity games": "🕹️", Reading: "📚", Coding: "💻" }[h]} {h}
-            </Chip>
+  <Window id="about" title="About Me">
+    <div className="grid gap-10 lg:grid-cols-[300px_1fr]">
+      <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
+        <div className="relative">
+          <div className="absolute -inset-6 rounded-full bg-sys-blue/25 blur-3xl" aria-hidden />
+          <img src={asset("avatar-laptop.png")} alt="Filobatire's avatar" className="relative w-52 drop-shadow-2xl" />
+        </div>
+        <p className="mt-5 text-[26px] font-semibold tracking-tight">{profile.name}</p>
+        <p className="text-[15px] text-muted">{profile.role}</p>
+        <dl className="mt-6 w-full space-y-2.5 text-left text-[13.5px]">
+          {specs.map((s) => (
+            <div key={s.k} className="grid grid-cols-[92px_1fr] gap-3">
+              <dt className="text-right font-medium text-muted">{s.k}</dt>
+              <dd className="text-white/90">
+                {s.live && <span className="mr-1.5 inline-block h-2 w-2 animate-pulse rounded-full bg-sys-green align-middle" />}
+                {s.v}
+              </dd>
+            </div>
           ))}
-        </motion.div>
+        </dl>
       </div>
 
-      {splineScenes.about ? (
-        <motion.div variants={fadeIn("left", 0.2)}>
-          <SplineScene url={splineScenes.about} className="h-[420px] w-full" />
-        </motion.div>
-      ) : (
-      <motion.div variants={fadeIn("left", 0.2)} className="relative mx-auto w-full max-w-sm">
-        <div className="green-pink-gradient rounded-[28px] p-[1px] shadow-card">
-          <div className="rounded-[28px] bg-tertiary p-8">
-            <img src={asset("avatar-laptop.png")} alt="Filobatire's avatar" className="mx-auto w-56" />
-            <p className="mt-4 text-center text-lg font-bold">{profile.name}</p>
-            <p className="text-center font-mono text-sm text-secondary">{profile.role}</p>
-          </div>
+      <div>
+        <Eyebrow>Introduction</Eyebrow>
+        <H>Engineer who ships reliable software, end to end.</H>
+        <p className="mt-5 text-[17px] leading-[1.7] text-white/85">{profile.summary}</p>
+        <p className="mt-4 text-[15.5px] leading-[1.75] text-muted">
+          {profile.intro} {profile.profileText}
+        </p>
+
+        <div className="mt-6 flex flex-wrap gap-2">
+          {profile.hobbies.map((h) => (
+            <Tag key={h}>
+              {{ Movies: "🎬", "Building Unity games": "🕹️", Reading: "📚", Coding: "💻" }[h]} {h}
+            </Tag>
+          ))}
         </div>
-      </motion.div>
-      )}
+
+        <div className="mt-8 grid grid-cols-2 gap-3 md:grid-cols-4">
+          {stats.map((s, i) => (
+            <motion.div
+              key={s.label}
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.08 * i }}
+              className="rounded-xl border border-white/[0.07] bg-white/[0.04] p-4"
+            >
+              <p className="bg-gradient-to-br from-white to-sys-teal bg-clip-text text-[30px] font-bold tracking-tight text-transparent">
+                {s.value}
+              </p>
+              <p className="mt-1 text-[12.5px] leading-snug text-muted">{s.label}</p>
+            </motion.div>
+          ))}
+        </div>
+      </div>
     </div>
 
-    <div className="mt-14 grid grid-cols-2 gap-4 md:grid-cols-4">
-      {stats.map((s, i) => (
-        <motion.div key={s.label} variants={fadeIn("up", 0.1 * i)} className="glass rounded-2xl p-5">
-          <p className="text-gradient text-4xl font-black">{s.value}</p>
-          <p className="mt-1 text-sm text-secondary">{s.label}</p>
-        </motion.div>
+    <div className="mt-10 grid gap-3 border-t border-white/[0.06] pt-8 sm:grid-cols-2 lg:grid-cols-4">
+      {services.map((s) => (
+        <div key={s.title} className="group rounded-xl border border-white/[0.07] bg-white/[0.03] p-5 transition hover:border-white/15 hover:bg-white/[0.06]">
+          <span className="text-3xl">{s.icon}</span>
+          <h4 className="mt-3 text-[16px] font-semibold">{s.title}</h4>
+          <p className="mt-1.5 text-[13.5px] leading-relaxed text-muted">{s.text}</p>
+        </div>
       ))}
     </div>
-
-    <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-      {services.map((s, i) => (
-        <motion.div key={s.title} variants={fadeIn("right", 0.15 * i, 0.75)}>
-          <Tilt tiltMaxAngleX={25} tiltMaxAngleY={25} scale={1.03} transitionSpeed={450} className="h-full">
-            <div className="green-pink-gradient h-full rounded-[20px] p-[1px] shadow-card">
-              <div className="flex h-full min-h-[230px] flex-col items-center justify-center rounded-[20px] bg-tertiary px-6 py-6 text-center">
-                <span className="text-5xl">{s.icon}</span>
-                <h3 className="mt-4 text-[19px] font-bold text-white">{s.title}</h3>
-                <p className="mt-2 text-[14px] leading-6 text-secondary">{s.text}</p>
-              </div>
-            </div>
-          </Tilt>
-        </motion.div>
-      ))}
-    </div>
-  </Section>
+  </Window>
 );
 
 export default About;

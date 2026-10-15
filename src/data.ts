@@ -25,15 +25,6 @@ export const profile = {
   hobbies: ["Movies", "Building Unity games", "Reading", "Coding"],
 };
 
-// Spline (spline.design) scenes. In Spline: Export → Code → React, and paste the
-// "scene.splinecode" URL here. Empty = keep the built-in visuals.
-export const splineScenes = {
-  // Replaces the avatar card in the About section.
-  about: "",
-  // Replaces the rotating Earth in the Contact section.
-  contact: "",
-};
-
 export const navLinks = [
   { id: "about", title: "About" },
   { id: "experience", title: "Experience" },

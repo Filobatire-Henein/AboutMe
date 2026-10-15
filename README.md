@@ -19,14 +19,13 @@ Pushing to `main` builds and deploys via `.github/workflows/static.yml`.
 
 All text, experience, projects and skills live in `src/data.ts`.
 
-## Spline scenes (optional)
+## How the 3D intro works
 
-Design or remix a scene at https://spline.design (free plan), then **Export → Code → React** and paste the
-`https://prod.spline.design/.../scene.splinecode` URL into `splineScenes` in `src/data.ts`:
+The MacBook is a Spline scene (`src/mac/MacStage.tsx`, loaded with `@splinetool/runtime`).
+Scroll position drives the laptop's pose (lid angle, rotation, distance). Each frame the
+`SCREEN IMAGE` mesh is projected to the page and the HTML lock screen is pinned onto it
+with a CSS `matrix3d`, so what you see on the laptop is real, live HTML.
+Poses are tuned in `introPoses` / `outroPoses`.
 
-- `about` — replaces the avatar card in the About section
-- `contact` — replaces the rotating Earth in the Contact section
-
-## 3D model credits
-
-`public/desktop_pc` and `public/planet` are Sketchfab models; see the `license.txt` in each folder.
+Visitors with "reduce motion" turned on, or whose browser can't load the scene, get the
+same content as a normal page.

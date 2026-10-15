@@ -5,7 +5,7 @@ import { CanvasTexture, Group, sRGBEncoding } from "three";
 
 import CanvasLoader from "./Loader";
 
-const palette = ["#915eff", "#f272c8", "#38bdf8", "#34d399", "#facc15", "#fb923c"];
+const palette = ["#0a84ff", "#bf5af2", "#30d158", "#ff9f0a", "#ff375f", "#5ac8fa"];
 
 // Draws a label onto a canvas so every skill gets a decal without image files.
 const makeLabel = (text: string, color: string) => {
@@ -78,7 +78,7 @@ const SkillOrbsCanvas = ({ skills }: { skills: string[] }) => (
   <Canvas dpr={[1, 2]} camera={{ position: [0, 0, 9], fov: 50 }}>
     <ambientLight intensity={0.5} />
     <directionalLight position={[2, 3, 6]} intensity={1.1} />
-    <pointLight position={[-4, -2, 4]} intensity={0.6} color="#915eff" />
+    <pointLight position={[-4, -2, 4]} intensity={0.6} color="#0a84ff" />
     <Suspense fallback={<CanvasLoader />}>
       <OrbitControls enableZoom={false} enablePan={false} />
       <Cloud skills={skills} />
