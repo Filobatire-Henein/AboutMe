@@ -14,21 +14,27 @@ const SCREEN_W = 1512;
 const SCREEN_H = 982;
 
 // ox/oy place the laptop as a fraction of the visible width/height
-// (+ox = right, +oy = lower) so poses read the same on any screen. `d` is the distance to the screen, null = fill.
-type Pose = { rx: number; ry: number; lid: number; ox: number; oy: number; d: number | null };
+// (+ox = right, +oy = lower) so poses read the same on any screen.
+// `d` is the distance to the screen, null = fill the viewport.
+type Pose = { rx: number; ry: number; rz: number; lid: number; ox: number; oy: number; d: number | null };
 
+const TAU = Math.PI * 2;
+
+// Spin 360° while the lid opens, barrel-roll, settle facing you, fly in.
 const introPoses = (wide: boolean): [number, Pose][] => [
-  [0, { rx: 0.62, ry: -0.62, lid: -0.05, ox: wide ? 0.22 : 0, oy: wide ? 0.02 : 0.2, d: wide ? 470 : 780 }],
-  [0.34, { rx: 0.2, ry: -0.3, lid: -1.66, ox: wide ? 0.16 : 0, oy: wide ? 0 : 0.1, d: wide ? 420 : 680 }],
-  [0.6, { rx: 0, ry: 0, lid: LID_OPEN, ox: 0, oy: 0, d: 300 }],
-  [0.86, { rx: 0, ry: 0, lid: LID_OPEN, ox: 0, oy: 0, d: null }],
+  [0, { rx: 0.55, ry: -0.6, rz: 0, lid: -0.05, ox: wide ? 0.22 : 0, oy: wide ? 0.02 : 0.2, d: wide ? 470 : 780 }],
+  [0.26, { rx: 0.25, ry: TAU - 0.6, rz: 0, lid: -1.66, ox: wide ? 0.18 : 0, oy: wide ? 0 : 0.12, d: wide ? 440 : 720 }],
+  [0.44, { rx: 0.15, ry: TAU - 0.25, rz: TAU, lid: -1.62, ox: wide ? 0.06 : 0, oy: wide ? 0 : 0.06, d: wide ? 380 : 620 }],
+  [0.6, { rx: 0, ry: TAU, rz: TAU, lid: LID_OPEN, ox: 0, oy: 0, d: 300 }],
+  [0.86, { rx: 0, ry: TAU, rz: TAU, lid: LID_OPEN, ox: 0, oy: 0, d: null }],
 ];
 
+// Fly out, then spin away while the lid closes.
 const outroPoses = (wide: boolean): [number, Pose][] => [
-  [0.08, { rx: 0, ry: 0, lid: LID_OPEN, ox: 0, oy: 0, d: null }],
-  [0.38, { rx: 0, ry: 0, lid: LID_OPEN, ox: 0, oy: 0, d: 300 }],
-  [0.66, { rx: 0.22, ry: 0.42, lid: -1.66, ox: wide ? -0.22 : 0, oy: wide ? 0 : -0.2, d: wide ? 440 : 720 }],
-  [0.95, { rx: 0.5, ry: 0.55, lid: -0.32, ox: wide ? -0.22 : 0, oy: wide ? 0.02 : -0.2, d: wide ? 470 : 760 }],
+  [0.08, { rx: 0, ry: 0, rz: 0, lid: LID_OPEN, ox: 0, oy: 0, d: null }],
+  [0.36, { rx: 0, ry: 0, rz: 0, lid: LID_OPEN, ox: 0, oy: 0, d: 300 }],
+  [0.6, { rx: 0.22, ry: 0.42, rz: 0, lid: -1.66, ox: wide ? -0.22 : 0, oy: wide ? 0 : -0.2, d: wide ? 440 : 720 }],
+  [0.95, { rx: 0.5, ry: 0.55 + TAU, rz: -0.18, lid: -0.32, ox: wide ? -0.22 : 0, oy: wide ? 0.02 : -0.2, d: wide ? 470 : 760 }],
 ];
 
 const samplePose = (keys: [number, Pose][], t: number, fillD: number): Pose & { d: number } => {
@@ -42,6 +48,7 @@ const samplePose = (keys: [number, Pose][], t: number, fillD: number): Pose & { 
       return {
         rx: lerp(a.rx, b.rx, k),
         ry: lerp(a.ry, b.ry, k),
+        rz: lerp(a.rz, b.rz, k),
         lid: lerp(a.lid, b.lid, k),
         ox: lerp(a.ox, b.ox, k),
         oy: lerp(a.oy, b.oy, k),
@@ -52,6 +59,17 @@ const samplePose = (keys: [number, Pose][], t: number, fillD: number): Pose & { 
   }
   const last = keys[keys.length - 1][1];
   return { ...last, d: D(last) };
+};
+
+// Signed area of a projected quad: flips sign when the screen faces away.
+const quadArea = (q: Pt[]) => {
+  let a = 0;
+  for (let i = 0; i < q.length; i++) {
+    const [x1, y1] = q[i];
+    const [x2, y2] = q[(i + 1) % q.length];
+    a += x1 * y2 - x2 * y1;
+  }
+  return a / 2;
 };
 
 const trackProgress = (id: string) => {
@@ -141,6 +159,7 @@ const MacStage = () => {
         const applyPose = (pose: { rx: number; ry: number; lid: number }) => {
           mac.rotation.x = pose.rx;
           mac.rotation.y = pose.ry;
+          mac.rotation.z = 0;
           lid.rotation.x = pose.lid;
           mesh.updateWorldMatrix(true, false);
         };
@@ -172,7 +191,10 @@ const MacStage = () => {
           }
           stage.style.visibility = "visible";
 
-          const key = `${p.toFixed(4)}|${q.toFixed(4)}|${vw}x${vh}`;
+          // Gentle floating while the laptop waits (before scrolling / at the end).
+          const idle = phase === "intro" ? 1 - smooth(p, 0, 0.08) : smooth(q, 0.9, 1);
+          const time = performance.now() / 1000;
+          const key = `${p.toFixed(4)}|${q.toFixed(4)}|${vw}x${vh}|${idle > 0 ? time.toFixed(2) : ""}`;
           if (key === lastKey) return;
           lastKey = key;
 
@@ -188,11 +210,12 @@ const MacStage = () => {
           // move the laptop instead, so the projection below stays exact.
           const visW = (pose.d * vw) / focal;
           const visH = (pose.d * vh) / focal;
-          mac.rotation.x = pose.rx;
-          mac.rotation.y = pose.ry;
+          mac.rotation.x = pose.rx + idle * 0.06 * Math.sin(time * 0.9);
+          mac.rotation.y = pose.ry + idle * 0.22 * Math.sin(time * 0.55);
+          mac.rotation.z = pose.rz + idle * 0.04 * Math.sin(time * 0.7);
           lid.rotation.x = pose.lid;
           mac.position.x = base.x - center.x + pose.ox * visW;
-          mac.position.y = base.y - center.y - pose.oy * visH;
+          mac.position.y = base.y - center.y - pose.oy * visH + idle * 4 * Math.sin(time * 1.1);
           mac.position.z = base.z;
           mesh.updateWorldMatrix(true, false);
           const cz = center.z + pose.d;
@@ -210,12 +233,20 @@ const MacStage = () => {
           const m = quadToMatrix3d(SCREEN_W, SCREEN_H, quad);
           const scr = screenRef.current!;
           if (m) scr.style.transform = m;
+          // Screen lights up as the lid opens; hidden whenever it faces away.
+          const frontArea = ((screenW * focal) / pose.d) * ((screenH * focal) / pose.d);
+          const facing = smooth(quadArea(quad) / frontArea, 0.04, 0.3);
           const on = smooth(-pose.lid / (Math.PI / 2), 0.62, 0.97);
-          scr.style.opacity = String(on);
+          scr.style.opacity = String(on * facing);
           scr.style.filter = `brightness(${0.35 + 0.65 * on})`;
 
           const t = phase === "intro" ? 1 - range(p, 0.88, 1) : range(q, 0, 0.08);
           stage.style.opacity = String(t);
+          // the glow behind the laptop follows it around
+          const gx = quad.reduce((a, c) => a + c[0], 0) / 4;
+          const gy = quad.reduce((a, c) => a + c[1], 0) / 4;
+          stage.style.setProperty("--gx", `${((gx / vw) * 100).toFixed(1)}%`);
+          stage.style.setProperty("--gy", `${((gy / vh) * 100 + 6).toFixed(1)}%`);
           stage.style.pointerEvents = phase === "outro" && q > 0.6 ? "auto" : "none";
           headRef.current!.style.opacity = String(phase === "intro" ? 1 - smooth(p, 0.1, 0.28) : 0);
           headRef.current!.style.transform = `translateY(${phase === "intro" ? -smooth(p, 0.1, 0.28) * 40 : 0}px)`;
@@ -263,29 +294,30 @@ const MacStage = () => {
         ref={headRef}
         className="absolute inset-x-0 top-0 px-6 pt-24 sm:px-12 md:inset-y-0 md:right-auto md:flex md:max-w-[46%] md:flex-col md:justify-center md:pt-0 lg:pl-20"
       >
-        <p className="font-mono text-[13px] uppercase tracking-[0.22em] text-ink-500">{profile.location}</p>
-        <p className="font-display mt-3 text-[44px] font-semibold leading-[1.02] tracking-[-0.035em] text-ink-900 sm:text-[64px] lg:text-[84px]">
+        <p className="font-mono text-[13px] uppercase tracking-[0.22em] text-white/50">{profile.location}</p>
+        <p className="font-display mt-3 text-[44px] font-semibold leading-[1.02] tracking-[-0.035em] text-white sm:text-[64px] lg:text-[84px]">
           Filobatire
           <br />
-          Henein<span className="text-accent">.</span>
+          <span className="bg-gradient-to-r from-sys-teal via-sys-blue to-sys-purple bg-clip-text text-transparent">Henein</span>
+          <span className="text-sys-blue">.</span>
         </p>
-        <p className="mt-5 max-w-md text-[18px] leading-relaxed text-ink-600 sm:text-[21px]">
+        <p className="mt-5 max-w-md text-[18px] leading-relaxed text-white/65 sm:text-[21px]">
           Full-stack software engineer. I build reliable web apps, APIs and 3D games.
         </p>
-        <p className="mt-8 hidden items-center gap-2 text-[14px] font-medium text-ink-500 md:flex">
+        <p className="mt-8 hidden items-center gap-2 text-[14px] font-medium text-white/50 md:flex">
           <span className="scroll-cue" /> Scroll to open the laptop
         </p>
-        {status === "loading" && <p className="mt-4 text-sm text-ink-500">Loading 3D scene…</p>}
+        {status === "loading" && <p className="mt-4 text-sm text-white/50">Loading 3D scene…</p>}
       </div>
 
       <div
         ref={outroRef}
         className="absolute inset-x-0 bottom-0 px-6 pb-20 opacity-0 sm:px-12 md:inset-y-0 md:left-auto md:right-0 md:flex md:w-[46%] md:flex-col md:justify-center md:pb-0 lg:pr-20"
       >
-        <h2 className="font-display text-[38px] font-semibold leading-[1.05] tracking-[-0.03em] text-ink-900 sm:text-[56px]">
-          Let's build something<span className="text-accent">.</span>
+        <h2 className="font-display text-[38px] font-semibold leading-[1.05] tracking-[-0.03em] text-white sm:text-[56px]">
+          Let's build something<span className="text-sys-blue">.</span>
         </h2>
-        <p className="mt-4 max-w-md text-[17px] text-ink-600">
+        <p className="mt-4 max-w-md text-[17px] text-white/65">
           Open to full-stack and backend software engineering roles in the Seattle area and remote.
         </p>
         <div className="mt-7 flex flex-wrap gap-3">
@@ -299,7 +331,7 @@ const MacStage = () => {
             LinkedIn
           </a>
         </div>
-        <p className="mt-10 text-[12px] text-ink-500">
+        <p className="mt-10 text-[12px] text-white/40">
           © {new Date().getFullYear()} {profile.name} · MacBook scene built with Spline
         </p>
       </div>
