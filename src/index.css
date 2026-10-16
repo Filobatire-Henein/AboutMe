@@ -1,0 +1,179 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body {
+  overflow-x: clip;
+}
+
+html {
+  color-scheme: dark;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  background: #0b0b12;
+  color: rgba(255, 255, 255, 0.92);
+  font-family: Inter, system-ui, -apple-system, sans-serif;
+  font-feature-settings: "cv11", "ss01";
+}
+
+::selection {
+  background: rgba(10, 132, 255, 0.45);
+  color: #fff;
+}
+
+/* Dark stage around the MacBook: a glow that follows the laptop, a faint
+   perspective grid and a vignette. --gx/--gy are set from the 3D scene. */
+.stage-bg {
+  background:
+    radial-gradient(34% 40% at var(--gx, 62%) var(--gy, 56%), rgba(10, 132, 255, 0.34) 0%, rgba(10, 132, 255, 0) 70%),
+    radial-gradient(26% 32% at calc(var(--gx, 62%) + 10%) calc(var(--gy, 56%) - 12%), rgba(191, 90, 242, 0.28) 0%, rgba(191, 90, 242, 0) 70%),
+    radial-gradient(30% 30% at calc(var(--gx, 62%) - 12%) calc(var(--gy, 56%) + 14%), rgba(100, 210, 255, 0.16) 0%, rgba(100, 210, 255, 0) 70%),
+    radial-gradient(120% 90% at 50% 50%, #0b0b14 0%, #050508 60%, #020203 100%);
+}
+.stage-bg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: radial-gradient(60% 55% at var(--gx, 62%) var(--gy, 56%), #000 0%, transparent 75%);
+  -webkit-mask-image: radial-gradient(60% 55% at var(--gx, 62%) var(--gy, 56%), #000 0%, transparent 75%);
+}
+.stage-bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(110% 80% at 50% 45%, transparent 55%, rgba(0, 0, 0, 0.65) 100%);
+}
+
+/* Desktop wallpaper, shared by the lock screen and the desktop */
+.wallpaper {
+  background-color: #0b0b14;
+  background-image:
+    radial-gradient(42% 52% at 18% 22%, rgba(10, 132, 255, 0.55) 0%, rgba(10, 132, 255, 0) 70%),
+    radial-gradient(38% 46% at 84% 18%, rgba(191, 90, 242, 0.5) 0%, rgba(191, 90, 242, 0) 70%),
+    radial-gradient(48% 50% at 70% 88%, rgba(100, 210, 255, 0.35) 0%, rgba(100, 210, 255, 0) 70%),
+    radial-gradient(40% 40% at 12% 92%, rgba(255, 55, 95, 0.28) 0%, rgba(255, 55, 95, 0) 70%),
+    linear-gradient(160deg, #10101c 0%, #0b0b12 100%);
+}
+
+.wallpaper-fixed {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+}
+
+/* macOS-like glass */
+.glass {
+  background: rgba(30, 30, 36, 0.62);
+  backdrop-filter: saturate(180%) blur(24px);
+  -webkit-backdrop-filter: saturate(180%) blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+}
+
+.glass-strong {
+  background: rgba(22, 22, 28, 0.82);
+  backdrop-filter: saturate(180%) blur(30px);
+  -webkit-backdrop-filter: saturate(180%) blur(30px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.window-shadow {
+  box-shadow:
+    0 0 0 0.5px rgba(0, 0, 0, 0.8),
+    0 30px 80px -20px rgba(0, 0, 0, 0.75),
+    0 12px 30px -12px rgba(0, 0, 0, 0.6);
+}
+
+.btn-primary {
+  @apply inline-flex items-center gap-2 rounded-full bg-sys-blue px-6 py-3 text-[15px] font-semibold text-white shadow-[0_8px_30px_-8px_rgba(10,132,255,0.7)] transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sys-blue;
+}
+
+.btn-secondary {
+  @apply inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-6 py-3 text-[15px] font-semibold text-white backdrop-blur transition hover:border-white/30 hover:bg-white/10;
+}
+
+.btn-sys {
+  @apply inline-flex items-center gap-2 rounded-lg bg-sys-blue px-4 py-2 text-[14px] font-semibold text-white transition hover:brightness-110;
+}
+
+.btn-ghost {
+  @apply inline-flex items-center gap-2 rounded-lg border border-white/15 bg-white/5 px-4 py-2 text-[14px] font-medium text-white/90 transition hover:bg-white/10;
+}
+
+.scroll-cue {
+  width: 18px;
+  height: 28px;
+  border: 2px solid currentColor;
+  border-radius: 10px;
+  position: relative;
+}
+.scroll-cue::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 5px;
+  width: 3px;
+  height: 6px;
+  margin-left: -1.5px;
+  border-radius: 2px;
+  background: currentColor;
+  animation: cue 1.6s ease-in-out infinite;
+}
+@keyframes cue {
+  0% { transform: translateY(0); opacity: 1; }
+  70% { transform: translateY(9px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 0; }
+}
+
+/* Phase-driven chrome: menu bar & dock only on the desktop */
+.desktop-chrome {
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+html[data-stage="on"]:not([data-phase="desktop"]) .desktop-chrome {
+  opacity: 0;
+  pointer-events: none;
+}
+html[data-stage="on"]:not([data-phase="desktop"]) .dock-wrap {
+  transform: translate(-50%, 24px);
+}
+
+/* Without the 3D stage the scroll tracks collapse to a normal page */
+html[data-stage="off"] .track {
+  height: auto !important;
+}
+html[data-stage="off"] .track > .track-sticky {
+  position: relative;
+}
+
+.section-anchor {
+  scroll-margin-top: 56px;
+}
+
+.canvas-loader {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.15);
+  border-top-color: #0a84ff;
+  animation: spin 0.9s linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
